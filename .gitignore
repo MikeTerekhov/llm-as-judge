@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .env
 hiv_evaluation_results.json
+
+# Locally retrieved guideline snapshots (review licensing before sharing)
+local-guideline-*.json
