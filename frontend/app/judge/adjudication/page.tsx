@@ -1,6 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 type Row={example_id:string;category:string;reviewers:number;consensus:string|null;disputed:boolean;needs_second_review:boolean};
+type Quality={status:string;checks:{name:string;passed:boolean;observed:number|null;threshold:number}[];disclaimer:string};
 type Reliability={reviewer_count:number;pairwise_cohen:{reviewer_a:string;reviewer_b:string;paired_examples:number;kappa:number|null}[];fleiss:{items:number;raters_per_item:number|null;kappa:number|null};categories:Record<string,{reviewed:number;multiply_reviewed:number;disputed:number}>};
 type Report={total_examples:number;reviewed_examples:number;multiply_reviewed:number;unanimous_count:number;unanimity_rate:number|null;rows:Row[];disclaimer:string};
 const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:8000";
@@ -8,6 +9,7 @@ export default function AdjudicationPage(){
   const [report,setReport]=useState<Report|null>(null);
   const [error,setError]=useState("");
   const [reliability,setReliability]=useState<Reliability|null>(null);
+  const [quality,setQuality]=useState<Quality|null>(null);
   useEffect(()=>{const controller=new AbortController();
     fetch(API+"/api/v1/judge/adjudication",{signal:controller.signal})
       .then(async r=>{if(!r.ok)throw new Error("Unavailable");return r.json() as Promise<Report>})
@@ -15,6 +17,9 @@ export default function AdjudicationPage(){
     fetch(API+"/api/v1/judge/reliability",{signal:controller.signal})
       .then(async r=>{if(!r.ok)throw new Error("Unavailable");return r.json() as Promise<Reliability>})
       .then(setReliability).catch(()=>{});
+    fetch(API+"/api/v1/judge/quality-gates",{signal:controller.signal})
+      .then(async r=>{if(!r.ok)throw new Error("Unavailable");return r.json() as Promise<Quality>})
+      .then(setQuality).catch(()=>{});
     return ()=>controller.abort();
   },[]);
   return <main>
@@ -29,6 +34,11 @@ export default function AdjudicationPage(){
         <p>Reviewed: {report.reviewed_examples}/{report.total_examples} · Multiple reviews: {report.multiply_reviewed}</p>
         <p>Unanimity among multiply-reviewed cases: {report.unanimity_rate===null?"N/A":(report.unanimity_rate*100).toFixed(1)+"%"}</p>
       </section>
+      {quality&&<section className="panel"><h2>Benchmark quality gates</h2>
+        <p>Review readiness: {quality.status==="pass"?"Passed process checks":"Blocked — further review required"}</p>
+        <ul>{quality.checks.map(check=><li key={check.name}>{check.name.replaceAll("_"," ")}: {check.passed?"Pass":"Blocked"} · Observed {check.observed===null?"N/A":check.observed.toFixed(3)} · Threshold {check.threshold.toFixed(3)}</li>)}</ul>
+        <p className="muted">{quality.disclaimer}</p>
+      </section>}
       {reliability&&<section className="panel"><h2>Inter-rater reliability</h2>
         <p>Reviewers: {reliability.reviewer_count} · Fleiss kappa: {reliability.fleiss.kappa===null?"N/A":reliability.fleiss.kappa.toFixed(3)}</p>
         <h3>Reviewer pairs</h3>
