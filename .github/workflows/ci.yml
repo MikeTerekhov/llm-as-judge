@@ -41,6 +41,8 @@ jobs:
         run: python -m scripts.verify_evaluation_ci --output artifacts/synthetic-evaluation.json
       - name: Verify fail-closed research readiness
         run: python -m scripts.verify_release_ci
+      - name: Create pending research manifest
+        run: python -m scripts.verify_manifest_ci
       - name: Upload verified synthetic evaluation
         uses: actions/upload-artifact@v4
         with:
@@ -48,6 +50,7 @@ jobs:
           path: |
             artifacts/synthetic-evaluation.json
             artifacts/release-readiness.json
+            artifacts/research-release-manifest.json
           if-no-files-found: error
           retention-days: 14
   regression:
