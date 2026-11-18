@@ -6,3 +6,6 @@ hiv_evaluation_results.json
 
 # Locally retrieved guideline snapshots (review licensing before sharing)
 local-guideline-*.json
+
+# Operator-only local experiment records
+local/
