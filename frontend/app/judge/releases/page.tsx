@@ -17,7 +17,7 @@ export default function ReleasesPage(){
   return <main>
     <p className="muted">AI REGIMEN / RESEARCH WORKSPACE</p>
     <h1>Research release registry</h1>
-    <p><a href="/judge">Back to judge evaluation</a></p>
+    <p><a href="/judge">Back to judge evaluation</a></p><p><a href="/judge/audit">View research audit trail →</a></p>
     <p className="muted">Local synthetic research manifests. Decisions are self-asserted, not authenticated approval.</p>
     {error&&<div className="notice" role="alert">{error}</div>}
     {!error&&!data&&<p role="status">Loading research registry…</p>}
