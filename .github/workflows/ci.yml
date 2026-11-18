@@ -39,11 +39,15 @@ jobs:
           python-version: "3.12"
       - name: Generate and verify deterministic offline report
         run: python -m scripts.verify_evaluation_ci --output artifacts/synthetic-evaluation.json
+      - name: Verify fail-closed research readiness
+        run: python -m scripts.verify_release_ci
       - name: Upload verified synthetic evaluation
         uses: actions/upload-artifact@v4
         with:
           name: synthetic-evaluation-report
-          path: artifacts/synthetic-evaluation.json
+          path: |
+            artifacts/synthetic-evaluation.json
+            artifacts/release-readiness.json
           if-no-files-found: error
           retention-days: 14
   regression:
