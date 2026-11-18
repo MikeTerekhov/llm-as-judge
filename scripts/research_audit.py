@@ -1,7 +1,8 @@
 """Local research audit event CLI; no network calls or deployments."""
 import argparse
 import json
-from clinical.research_audit import append_audit, audit_summary
+from clinical.research_audit import audit_summary
+from clinical.audit_integrity import locked_append
 
 def main():
     parser = argparse.ArgumentParser()
@@ -17,7 +18,7 @@ def main():
     show.add_argument("--release-id")
     args = parser.parse_args()
     if args.command == "append":
-        print(json.dumps(append_audit(args.path, event_type=args.event_type,
+        print(json.dumps(locked_append(args.path, event_type=args.event_type,
                                      release_id=args.release_id,
                                      artifact_sha256=args.artifact_sha256,
                                      actor_id=args.actor_id), indent=2))
