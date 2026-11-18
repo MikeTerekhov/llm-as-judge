@@ -5,7 +5,7 @@ from clinical.adversarial_model_benchmark import benchmark_adversarial
 from api.adversarial_model_benchmark import adversarial_model
 
 def mock_model(prompt):
-    data = json.loads(prompt.split("DATA:\\n", 1)[1])
+    data = json.loads(prompt.split("DATA:\n", 1)[1])
     return json.dumps({"verdict": "supported", "rationale": "Synthetic mock.",
                        "citation_ids": [hit["document_id"] for hit in data["evidence"]]})
 
