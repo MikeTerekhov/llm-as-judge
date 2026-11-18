@@ -1,0 +1,50 @@
+[
+  {
+    "id": "negation-reversal",
+    "category": "Negation",
+    "claim": "The blue beacon is active.",
+    "evidence": "The blue beacon is not active.",
+    "expected": "contradicted",
+    "explanation": "The cited passage explicitly negates the claim."
+  },
+  {
+    "id": "quantity-mismatch",
+    "category": "Quantity",
+    "claim": "The test used seven widgets.",
+    "evidence": "The test used five widgets.",
+    "expected": "contradicted",
+    "explanation": "A different exact count is given."
+  },
+  {
+    "id": "hedged-certainty",
+    "category": "Uncertainty",
+    "claim": "The fictional sensor always succeeds.",
+    "evidence": "The fictional sensor may succeed.",
+    "expected": "insufficient_evidence",
+    "explanation": "Possibility does not establish certainty."
+  },
+  {
+    "id": "scope-generalization",
+    "category": "Scope",
+    "claim": "All prototype units passed inspection.",
+    "evidence": "Three prototype units passed inspection.",
+    "expected": "insufficient_evidence",
+    "explanation": "A subset cannot support a universal claim."
+  },
+  {
+    "id": "temporal-mismatch",
+    "category": "Time",
+    "claim": "The beacon was active on Monday.",
+    "evidence": "The beacon was active on Tuesday.",
+    "expected": "insufficient_evidence",
+    "explanation": "The passage does not establish the Monday status."
+  },
+  {
+    "id": "causal-overreach",
+    "category": "Causality",
+    "claim": "The alarm caused the shutdown.",
+    "evidence": "The alarm sounded before the shutdown.",
+    "expected": "insufficient_evidence",
+    "explanation": "Sequence alone does not establish causality."
+  }
+]
