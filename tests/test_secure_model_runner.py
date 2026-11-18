@@ -42,7 +42,7 @@ class RunnerTests(unittest.TestCase):
         def factory(**kwargs):
             self.assertEqual(kwargs["timeout"], 15)
             def call(prompt):
-                data = json.loads(prompt.split("DATA:\\n", 1)[1])
+                data = json.loads(prompt.split("DATA:\n", 1)[1])
                 seen.append(data)
                 return json.dumps({"verdict": "insufficient_evidence",
                                    "rationale": "Synthetic mock",
