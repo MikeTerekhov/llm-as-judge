@@ -8,11 +8,13 @@ from clinical.validation import review_case
 from clinical.assessment import AssessmentPipeline
 from .evidence_store import get_index
 from .judge_dashboard import router as judge_router
+from .judge_comparison import router as comparison_router
 from clinical.evidence_engine import EvidenceError
 
 app = FastAPI(title="AI Regimen Research API", version="0.7.0",
               description="Synthetic-case prototype. Not for clinical use.")
 app.include_router(judge_router)
+app.include_router(comparison_router)
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"],
                    allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 
