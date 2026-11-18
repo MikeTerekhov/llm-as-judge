@@ -15,6 +15,7 @@ from .adversarial_model_benchmark import router as adversarial_model_router
 from .human_adjudication import router as adjudication_router
 from .reviewer_reliability import router as reliability_router
 from .benchmark_quality_gates import router as quality_router
+from .evaluation_history import router as evaluation_history_router
 from clinical.evidence_engine import EvidenceError
 
 app = FastAPI(title="AI Regimen Research API", version="0.7.0",
@@ -27,6 +28,7 @@ app.include_router(adversarial_model_router)
 app.include_router(adjudication_router)
 app.include_router(reliability_router)
 app.include_router(quality_router)
+app.include_router(evaluation_history_router)
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"],
                    allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 
