@@ -19,7 +19,7 @@ export default function AdversarialPage(){
   },[]);
   return <main>
     <p className="muted">AI REGIMEN / RESEARCH WORKSPACE</p>
-    <h1>Adversarial evaluation</h1>
+    <h1>Adversarial evaluation</h1><p><a href="/judge/adjudication">View human review status →</a></p>
     <p><a href="/judge">Back to judge evaluation</a></p>
     {error&&<div className="notice" role="alert">{error}</div>}
     {!error&&!report&&<p role="status">Loading synthetic cases…</p>}
