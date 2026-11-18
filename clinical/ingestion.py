@@ -10,6 +10,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 import json
 
 from .evidence_engine import EvidenceDocument, EvidenceError, TRUSTED_HOSTS
+from .structured_html import extract_structured_text
 
 MAX_BYTES = 1_000_000
 MAX_TEXT = 200_000
@@ -62,9 +63,7 @@ def fetch_guideline(url: str) -> str:
         charset = response.headers.get_content_charset() or "utf-8"
         if charset.lower() not in {"utf-8", "utf8"}:
             raise EvidenceError("Unsupported source encoding")
-    parser = TextExtractor()
-    parser.feed(raw.decode("utf-8", errors="strict"))
-    text = " ".join("".join(parser.parts).split())
+    text = extract_structured_text(raw.decode("utf-8", errors="strict"))
     if not text or len(text) > MAX_TEXT:
         raise EvidenceError("Empty or oversized extracted text")
     return text
