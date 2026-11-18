@@ -6,9 +6,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from clinical.models import ClinicalCase
 from clinical.validation import review_case
 from clinical.assessment import AssessmentPipeline
-from clinical.evidence_engine import LocalEvidenceIndex
+from .evidence_store import get_index
+from clinical.evidence_engine import EvidenceError
 
-app = FastAPI(title="AI Regimen Research API", version="0.4.0",
+app = FastAPI(title="AI Regimen Research API", version="0.7.0",
               description="Synthetic-case prototype. Not for clinical use.")
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"],
                    allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
@@ -62,7 +63,19 @@ def case_review(payload: CaseInput):
 def assess_case(payload: CaseInput):
     try:
         case = ClinicalCase(**{**payload.model_dump(), "current_medications": tuple(payload.current_medications)})
-        assessment = AssessmentPipeline(LocalEvidenceIndex([])).assess(case, "HIV")
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        assessment = AssessmentPipeline(get_index()).assess(case, "monitoring")
+    except (OSError, ValueError, RuntimeError, EvidenceError) as exc:
+        raise HTTPException(status_code=503, detail="Evidence configuration unavailable") from exc
     return asdict(assessment)
+
+@app.get("/api/v1/evidence")
+def evidence_search(query: str = ""):
+    if not query.strip() or len(query) > 120:
+        raise HTTPException(status_code=422, detail="Query must be 1-120 characters")
+    try:
+        hits = get_index().search(query)
+    except (OSError, ValueError, RuntimeError, EvidenceError) as exc:
+        raise HTTPException(status_code=503, detail="Evidence configuration unavailable") from exc
+    return {"hits": [asdict(hit) for hit in hits],
+            "disclaimer": "Operator-reviewed research snapshots only; not clinically validated."}
+

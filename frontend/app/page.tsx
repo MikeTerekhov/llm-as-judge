@@ -2,7 +2,8 @@
 import { useState } from "react";
 
 type Review = {case_id:string;ready_for_evidence_review:boolean;missing_fields:string[];warnings:string[];disclaimer:string};
-type Assessment = {status:string;claims:unknown[];evidence:unknown[];warnings:string[];disclaimer:string};
+type EvidenceHit = {document_id:string;title:string;url:string;version:string;published_on:string;retrieved_at:string;sha256_digest:string;excerpt:string;score:number};
+type Assessment = {status:string;claims:unknown[];evidence:EvidenceHit[];warnings:string[];disclaimer:string};
 const initial = {case_id:"SYN-001",synthetic:true,hiv_rna_copies_ml:"42000",cd4_cells_mm3:"385",egfr_ml_min_173m2:"78",hbv_status:"unknown",resistance_history:"",current_medications:""};
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 export default function Home(){
@@ -43,7 +44,16 @@ export default function Home(){
       <p>Input completeness: {review.ready_for_evidence_review?"Demo fields populated":"Additional information required"}</p>
       <h3>Missing information</h3>{review.missing_fields.length?<ul>{review.missing_fields.map(s=><li key={s}>{s.replaceAll("_"," ")}</li>)}</ul>:<p>None in the demo schema.</p>}
       <h3>Warnings</h3><ul>{[...review.warnings,...assessment.warnings].map((s,i)=><li key={i}>{s}</li>)}</ul>
-      <h3>Evidence</h3><p>No live clinical evidence source is connected. No treatment recommendations are produced.</p>
+      <h3>Reviewed evidence snapshots</h3>
+      {assessment.evidence.length===0?<p>No matching reviewed evidence. The system abstains from recommendations.</p>:
+        <div>{assessment.evidence.map(hit=><article className="evidence" key={hit.document_id}>
+          <h4>{hit.title}</h4>
+          <p className="muted">Version: {hit.version} · Published: {hit.published_on} · Retrieved: {hit.retrieved_at.slice(0,10)}</p>
+          <p>{hit.excerpt}</p>
+          <p className="muted">Document ID: {hit.document_id} · SHA-256: <code>{hit.sha256_digest}</code></p>
+          <a href={hit.url} target="_blank" rel="noopener noreferrer">Open source page</a>
+        </article>)}</div>}
+      <p className="muted">Review flags are operator attestations, not proof of source authenticity or medical correctness.</p>
       <p className="muted">{assessment.disclaimer}</p></section>}
   </main>;
 }
