@@ -27,3 +27,22 @@ jobs:
           node-version: "22"
       - run: npm install --no-audit --no-fund
       - run: npm run build
+  evaluation:
+    name: Synthetic evaluation report
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate and verify deterministic offline report
+        run: python -m scripts.verify_evaluation_ci --output artifacts/synthetic-evaluation.json
+      - name: Upload verified synthetic evaluation
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-evaluation-report
+          path: artifacts/synthetic-evaluation.json
+          if-no-files-found: error
+          retention-days: 14
