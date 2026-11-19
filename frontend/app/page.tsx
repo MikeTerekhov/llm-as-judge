@@ -26,7 +26,7 @@ export default function Home(){
       setReview(await responses[0].json());setAssessment(await responses[1].json());
     }catch(e){setError(e instanceof Error?e.message:"Request failed");}finally{setBusy(false);}
   }
-  return <main><p className="muted">AI REGIMEN / RESEARCH WORKSPACE</p><h1>Clinical evidence review</h1><p><a href="/demo">▶ Launch interactive demo (no backend required) →</a></p><p><a href="/judge">View synthetic judge evaluation →</a></p>
+  return <main><p className="muted">AI REGIMEN / RESEARCH WORKSPACE</p><h1>Clinical evidence review</h1><p><a href="/demo">▶ Launch interactive demo (no backend required) →</a></p><p><a href="/judge">View synthetic judge evaluation →</a></p><p><a href="/judge/overview">Research evaluation overview →</a></p>
     <p className="muted">Synthetic case demonstration. No diagnosis, prescribing, or clinical decisions.</p>
     <div className="notice">Research prototype only. Never enter real patient information, including identifiers or clinical records. A synthetic flag does not detect PHI.</div>
     <section className="panel"><h2>Synthetic case inputs</h2><div className="grid">
