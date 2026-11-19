@@ -15,7 +15,7 @@ class DemoExportContractTests(unittest.TestCase):
     def test_report_contains_disclaimers_and_per_fixture_results(self):
         source = PAGE.read_text(encoding="utf-8")
         for term in ("fixture_id", "participant_answer", "matches_author_label",
-                     "explanation_revealed", "limitations", "No live LLM"):
+                     "explanation_revealed", "limitations", "No external LLM"):
             self.assertIn(term, source)
 
 if __name__ == "__main__":

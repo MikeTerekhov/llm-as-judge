@@ -5,6 +5,9 @@ import "./demo.css";
 
 type Verdict="supported"|"contradicted"|"insufficient_evidence";
 type Example=(typeof fixtures)[number];
+type LiveRow={id:string;expected_semantic_label:string;lexical_status:string;lexical_coverage:number;potential_false_assurance:boolean};
+type LiveReport={total:number;flagged_by_lexical_screen:number;potential_false_assurance_count:number;examples:LiveRow[];disclaimer:string};
+const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:8000";
 const steps=["Overview","Evidence challenge","Evaluation","Research governance"];
 const verdicts:{value:Verdict;label:string}[]=[
   {value:"supported",label:"Supported"},
@@ -19,6 +22,8 @@ export default function DemoPage(){
   const [answers,setAnswers]=useState<Record<string,Verdict>>({});
   const [revealed,setRevealed]=useState<Record<string,boolean>>({});
   const [history,setHistory]=useState(false);
+  const [live,setLive]=useState<LiveReport|null>(null);
+  const [liveStatus,setLiveStatus]=useState<"offline"|"loading"|"connected"|"error">("offline");
   const [decision,setDecision]=useState<"pending"|"rejected">("pending");
   const example:Example=fixtures[index];
   const answered=Object.keys(answers).length;
@@ -27,15 +32,27 @@ export default function DemoPage(){
   const baseline=useMemo(()=>fixtures.map((f,i)=>({id:f.id,expected:f.expected,
     simulated:i===0?"supported":i===1?"supported":f.expected})),[]);
   const mismatches=baseline.filter(r=>r.simulated!==r.expected);
+  async function loadLive(){
+    setLiveStatus("loading");
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),5000);
+    try{
+      const response=await fetch(API+"/api/v1/judge/adversarial",{signal:controller.signal,cache:"no-store"});
+      if(!response.ok)throw new Error("Evaluator unavailable");
+      const result:LiveReport=await response.json();
+      if(!result||!Array.isArray(result.examples)||result.total!==12||result.examples.length!==12||!result.examples.every(row=>typeof row.id==="string"&&typeof row.lexical_status==="string"&&typeof row.lexical_coverage==="number"&&typeof row.potential_false_assurance==="boolean"))throw new Error("Invalid evaluator response");
+      setLive(result);setLiveStatus("connected");
+    }catch{setLive(null);setLiveStatus("error");}finally{clearTimeout(timeout);}
+  }
   function exportResults(){
     const results=fixtures.map(f=>({fixture_id:f.id,category:f.category,author_label:f.expected,participant_answer:answers[f.id]??null,explanation_revealed:!!revealed[f.id],matches_author_label:answers[f.id]?answers[f.id]===f.expected:null}));
-    const report={schema_version:"1.0",kind:"synthetic_interactive_demo",fixture_count:fixtures.length,answered_count:answered,matching_author_labels:correct,results,limitations:["Fictional author labels are not clinical ground truth.","No live LLM or clinical evaluation was performed.","Research-governance events in the walkthrough are simulated and not persisted."]};
+    const report={schema_version:"1.0",kind:"synthetic_interactive_demo",live_evaluator_connected:liveStatus==="connected",live_evaluator_summary:live?{total:live.total,flagged_by_lexical_screen:live.flagged_by_lexical_screen,potential_false_assurance_count:live.potential_false_assurance_count}:null,fixture_count:fixtures.length,answered_count:answered,matching_author_labels:correct,results,limitations:["Fictional author labels are not clinical ground truth.","No external LLM or clinical evaluation was performed.","Research-governance events in the walkthrough are simulated and not persisted."]};
     const blob=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const link=document.createElement("a");link.href=url;link.download="ai-regimen-demo-results.json";document.body.appendChild(link);link.click();link.remove();
     URL.revokeObjectURL(url);
   }
-  function reset(){setStep(0);setIndex(0);setAnswers({});setRevealed({});setHistory(false);setDecision("pending");}
+  function reset(){setLive(null);setLiveStatus("offline");setStep(0);setIndex(0);setAnswers({});setRevealed({});setHistory(false);setDecision("pending");}
   return <main className="demo-shell">
     <header className="demo-top">
       <a href="/" className="demo-brand">AI <span>REGIMEN</span></a>
@@ -69,7 +86,9 @@ export default function DemoPage(){
     </section>}
     {step===2&&<section className="demo-panel">
       <p className="demo-eyebrow">03 / EVALUATION</p><h2>Where simple evaluation can go wrong.</h2>
-      <p>These illustrative outputs simulate an overly permissive lexical baseline, not the live application's measured predictions. Compare them with the fictional author labels.</p>
+      <p>The table below is an offline teaching simulation, not measured evaluator output. Connect the local API above to inspect actual deterministic lexical screening on twelve canonical fictional fixtures.</p>
+      <div className="demo-live-controls"><button onClick={loadLive} disabled={liveStatus==="loading"}>{liveStatus==="loading"?"Connecting…":liveStatus==="connected"?"Refresh actual evaluator":"Connect actual evaluator"}</button><button className="demo-secondary" onClick={()=>{setLive(null);setLiveStatus("offline");}}>Use offline example</button><span role="status">{liveStatus==="connected"?"Connected to local research API":liveStatus==="error"?"Backend unavailable; offline example remains available":"Offline teaching example"}</span></div>
+      {live&&<div className="demo-feedback"><h3>Actual deterministic lexical screener</h3><p>{live.total} canonical fictional fixtures · {live.flagged_by_lexical_screen} flagged by lexical screening · {live.potential_false_assurance_count} potential false-assurance cases</p><p className="demo-muted">{live.disclaimer} REVIEW_REQUIRED does not mean semantically supported. No external LLM was invoked.</p><div className="demo-table-wrap"><table className="demo-table"><thead><tr><th>Fixture</th><th>Author label</th><th>Actual lexical status</th><th>Token coverage</th><th>False assurance risk</th></tr></thead><tbody>{live.examples.map(r=><tr key={r.id}><td>{title(r.id)}</td><td>{title(r.expected_semantic_label)}</td><td>{title(r.lexical_status)}</td><td>{(r.lexical_coverage*100).toFixed(0)}%</td><td>{r.potential_false_assurance?"Yes":"No"}</td></tr>)}</tbody></table></div></div>}
       <div className="demo-metrics"><div><strong>{fixtures.length}</strong><span>Illustrative fixtures</span></div><div><strong>{mismatches.length}</strong><span>Illustrative mismatches</span></div><div><strong>{answered}</strong><span>Your answers</span></div><div><strong>{correct}</strong><span>Matching author labels</span></div></div>
       <div className="demo-table-wrap"><table className="demo-table"><thead><tr><th>Fixture</th><th>Author label</th><th>Illustrative lexical result</th><th>Comparison</th></tr></thead><tbody>{baseline.map(r=><tr key={r.id}><td>{title(r.id)}</td><td>{title(r.expected)}</td><td>{title(r.simulated)}</td><td>{r.expected===r.simulated?"Match":"Mismatch"}</td></tr>)}</tbody></table></div>
       <div className="demo-export"><div><h3>Your demo results</h3><p>{answered} of {fixtures.length} cases answered, {correct} matching fictional author labels. Export a local JSON report with your answers and the stated limitations.</p></div><button onClick={exportResults} disabled={answered===0}>Download results (.json)</button></div>
