@@ -12,7 +12,7 @@ const verdicts:{value:Verdict;label:string}[]=[
   {value:"insufficient_evidence",label:"Insufficient evidence"}
 ];
 const title=(s:string)=>s.replaceAll("_"," ");
-const short=(s:string)=>s.slice(0,12)+"…";
+
 export default function DemoPage(){
   const [step,setStep]=useState(0);
   const [index,setIndex]=useState(0);
@@ -27,6 +27,14 @@ export default function DemoPage(){
   const baseline=useMemo(()=>fixtures.map((f,i)=>({id:f.id,expected:f.expected,
     simulated:i===0?"supported":i===1?"supported":f.expected})),[]);
   const mismatches=baseline.filter(r=>r.simulated!==r.expected);
+  function exportResults(){
+    const results=fixtures.map(f=>({fixture_id:f.id,category:f.category,author_label:f.expected,participant_answer:answers[f.id]??null,explanation_revealed:!!revealed[f.id],matches_author_label:answers[f.id]?answers[f.id]===f.expected:null}));
+    const report={schema_version:"1.0",kind:"synthetic_interactive_demo",fixture_count:fixtures.length,answered_count:answered,matching_author_labels:correct,results,limitations:["Fictional author labels are not clinical ground truth.","No live LLM or clinical evaluation was performed.","Research-governance events in the walkthrough are simulated and not persisted."]};
+    const blob=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement("a");link.href=url;link.download="ai-regimen-demo-results.json";document.body.appendChild(link);link.click();link.remove();
+    URL.revokeObjectURL(url);
+  }
   function reset(){setStep(0);setIndex(0);setAnswers({});setRevealed({});setHistory(false);setDecision("pending");}
   return <main className="demo-shell">
     <header className="demo-top">
@@ -64,6 +72,7 @@ export default function DemoPage(){
       <p>These illustrative outputs simulate an overly permissive lexical baseline, not the live application's measured predictions. Compare them with the fictional author labels.</p>
       <div className="demo-metrics"><div><strong>{fixtures.length}</strong><span>Illustrative fixtures</span></div><div><strong>{mismatches.length}</strong><span>Illustrative mismatches</span></div><div><strong>{answered}</strong><span>Your answers</span></div><div><strong>{correct}</strong><span>Matching author labels</span></div></div>
       <div className="demo-table-wrap"><table className="demo-table"><thead><tr><th>Fixture</th><th>Author label</th><th>Illustrative lexical result</th><th>Comparison</th></tr></thead><tbody>{baseline.map(r=><tr key={r.id}><td>{title(r.id)}</td><td>{title(r.expected)}</td><td>{title(r.simulated)}</td><td>{r.expected===r.simulated?"Match":"Mismatch"}</td></tr>)}</tbody></table></div>
+      <div className="demo-export"><div><h3>Your demo results</h3><p>{answered} of {fixtures.length} cases answered, {correct} matching fictional author labels. Export a local JSON report with your answers and the stated limitations.</p></div><button onClick={exportResults} disabled={answered===0}>Download results (.json)</button></div>
       <div className="demo-feedback"><h3>What this demonstrates</h3><p>Negation and quantity mismatches are especially useful for showing why word overlap is not sufficient evidence grounding. Actual evaluator metrics are available separately in the research workspace when the backend is running.</p></div>
     </section>}
     {step===3&&<section className="demo-panel">
