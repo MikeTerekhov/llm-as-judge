@@ -30,7 +30,7 @@ export default function DemoPage(){
   function exportResults(){
     const results=fixtures.map(f=>({fixture_id:f.id,category:f.category,author_label:f.expected,participant_answer:answers[f.id]??null,explanation_revealed:!!revealed[f.id],matches_author_label:answers[f.id]?answers[f.id]===f.expected:null}));
     const report={schema_version:"1.0",kind:"synthetic_interactive_demo",fixture_count:fixtures.length,answered_count:answered,matching_author_labels:correct,results,limitations:["Fictional author labels are not clinical ground truth.","No live LLM or clinical evaluation was performed.","Research-governance events in the walkthrough are simulated and not persisted."]};
-    const blob=new Blob([JSON.stringify(report,null,2)+"\\n"],{type:"application/json"});
+    const blob=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const link=document.createElement("a");link.href=url;link.download="ai-regimen-demo-results.json";document.body.appendChild(link);link.click();link.remove();
     URL.revokeObjectURL(url);
