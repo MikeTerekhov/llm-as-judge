@@ -8,6 +8,7 @@ from typing import Callable
 from .adversarial_fixtures import AdversarialExample, SemanticLabel
 from .claim_judge import JudgeStatus
 from .llm_judge import evaluate_with_model
+from .semantic_metrics import classification_metrics
 
 @dataclass(frozen=True)
 class AdversarialModelRow:
@@ -62,5 +63,6 @@ def benchmark_adversarial(examples: tuple[AdversarialExample, ...],
             "label_agreement_rate": round(matched / returned, 4) if returned else None,
             "lexical_disagreement_rate": round(disagreement / returned, 4) if returned else None,
             "categories": categories,
+            "classification": classification_metrics([vars(row) for row in rows]),
             "rows": [vars(row) for row in rows],
             "disclaimer": "Fictional, hand-authored semantic labels; not clinical correctness."}
