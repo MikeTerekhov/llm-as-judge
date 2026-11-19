@@ -7,6 +7,8 @@ type Verdict="supported"|"contradicted"|"insufficient_evidence";
 type Example=(typeof fixtures)[number];
 type LiveRow={id:string;expected_semantic_label:string;lexical_status:string;lexical_coverage:number;potential_false_assurance:boolean};
 type LiveReport={total:number;flagged_by_lexical_screen:number;potential_false_assurance_count:number;examples:LiveRow[];disclaimer:string};
+type ModelRow={example_id:string;expected:string;lexical_status:string;model_verdict:string|null;disposition:string;matches_hand_authored_label:boolean|null};
+type ModelReport={total:number;model_returned:number;model_abstained:number;rows:ModelRow[];disclaimer:string};
 const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:8000";
 const steps=["Overview","Evidence challenge","Evaluation","Research governance"];
 const verdicts:{value:Verdict;label:string}[]=[
@@ -22,6 +24,8 @@ export default function DemoPage(){
   const [answers,setAnswers]=useState<Record<string,Verdict>>({});
   const [revealed,setRevealed]=useState<Record<string,boolean>>({});
   const [history,setHistory]=useState(false);
+  const [model,setModel]=useState<ModelReport|null>(null);
+  const [modelStatus,setModelStatus]=useState<"offline"|"loading"|"connected"|"error">("offline");
   const [live,setLive]=useState<LiveReport|null>(null);
   const [liveStatus,setLiveStatus]=useState<"offline"|"loading"|"connected"|"error">("offline");
   const [decision,setDecision]=useState<"pending"|"rejected">("pending");
@@ -32,6 +36,18 @@ export default function DemoPage(){
   const baseline=useMemo(()=>fixtures.map((f,i)=>({id:f.id,expected:f.expected,
     simulated:i===0?"supported":i===1?"supported":f.expected})),[]);
   const mismatches=baseline.filter(r=>r.simulated!==r.expected);
+  async function loadModel(){
+    setModelStatus("loading");
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),5000);
+    try{
+      const response=await fetch(API+"/api/v1/judge/adversarial-model",{signal:controller.signal,cache:"no-store"});
+      if(!response.ok)throw new Error("Model report unavailable");
+      const result:ModelReport=await response.json();
+      if(!result||!Array.isArray(result.rows)||result.total!==12||result.rows.length!==12||!result.rows.every(row=>typeof row.example_id==="string"&&typeof row.expected==="string"&&(row.model_verdict===null||typeof row.model_verdict==="string")))throw new Error("Invalid model report");
+      setModel(result);setModelStatus("connected");
+    }catch{setModel(null);setModelStatus("error");}finally{clearTimeout(timeout);}
+  }
   async function loadLive(){
     setLiveStatus("loading");
     const controller=new AbortController();
@@ -46,13 +62,13 @@ export default function DemoPage(){
   }
   function exportResults(){
     const results=fixtures.map(f=>({fixture_id:f.id,category:f.category,author_label:f.expected,participant_answer:answers[f.id]??null,explanation_revealed:!!revealed[f.id],matches_author_label:answers[f.id]?answers[f.id]===f.expected:null}));
-    const report={schema_version:"1.0",kind:"synthetic_interactive_demo",live_evaluator_connected:liveStatus==="connected",live_evaluator_summary:live?{total:live.total,flagged_by_lexical_screen:live.flagged_by_lexical_screen,potential_false_assurance_count:live.potential_false_assurance_count}:null,fixture_count:fixtures.length,answered_count:answered,matching_author_labels:correct,results,limitations:["Fictional author labels are not clinical ground truth.","No external LLM or clinical evaluation was performed.","Research-governance events in the walkthrough are simulated and not persisted."]};
+    const report={schema_version:"1.0",kind:"synthetic_interactive_demo",live_evaluator_connected:liveStatus==="connected",model_comparison_loaded:modelStatus==="connected",model_verdicts_returned:model?.model_returned??null,live_evaluator_summary:live?{total:live.total,flagged_by_lexical_screen:live.flagged_by_lexical_screen,potential_false_assurance_count:live.potential_false_assurance_count}:null,fixture_count:fixtures.length,answered_count:answered,matching_author_labels:correct,results,limitations:["Fictional author labels are not clinical ground truth.","No external LLM or clinical evaluation was performed.","Research-governance events in the walkthrough are simulated and not persisted."]};
     const blob=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const link=document.createElement("a");link.href=url;link.download="ai-regimen-demo-results.json";document.body.appendChild(link);link.click();link.remove();
     URL.revokeObjectURL(url);
   }
-  function reset(){setLive(null);setLiveStatus("offline");setStep(0);setIndex(0);setAnswers({});setRevealed({});setHistory(false);setDecision("pending");}
+  function reset(){setModel(null);setModelStatus("offline");setLive(null);setLiveStatus("offline");setStep(0);setIndex(0);setAnswers({});setRevealed({});setHistory(false);setDecision("pending");}
   return <main className="demo-shell">
     <header className="demo-top">
       <a href="/" className="demo-brand">AI <span>REGIMEN</span></a>
@@ -89,6 +105,8 @@ export default function DemoPage(){
       <p>The table below is an offline teaching simulation, not measured evaluator output. Connect the local API above to inspect actual deterministic lexical screening on twelve canonical fictional fixtures.</p>
       <div className="demo-live-controls"><button onClick={loadLive} disabled={liveStatus==="loading"}>{liveStatus==="loading"?"Connecting…":liveStatus==="connected"?"Refresh actual evaluator":"Connect actual evaluator"}</button><button className="demo-secondary" onClick={()=>{setLive(null);setLiveStatus("offline");}}>Use offline example</button><span role="status">{liveStatus==="connected"?"Connected to local research API":liveStatus==="error"?"Backend unavailable; offline example remains available":"Offline teaching example"}</span></div>
       {live&&<div className="demo-feedback"><h3>Actual deterministic lexical screener</h3><p>{live.total} canonical fictional fixtures · {live.flagged_by_lexical_screen} flagged by lexical screening · {live.potential_false_assurance_count} potential false-assurance cases</p><p className="demo-muted">{live.disclaimer} REVIEW_REQUIRED does not mean semantically supported. No external LLM was invoked.</p><div className="demo-table-wrap"><table className="demo-table"><thead><tr><th>Fixture</th><th>Author label</th><th>Actual lexical status</th><th>Token coverage</th><th>False assurance risk</th></tr></thead><tbody>{live.examples.map(r=><tr key={r.id}><td>{title(r.id)}</td><td>{title(r.expected_semantic_label)}</td><td>{title(r.lexical_status)}</td><td>{(r.lexical_coverage*100).toFixed(0)}%</td><td>{r.potential_false_assurance?"Yes":"No"}</td></tr>)}</tbody></table></div></div>}
+      <div className="demo-live-controls"><button onClick={loadModel} disabled={modelStatus==="loading"}>{modelStatus==="loading"?"Loading…":modelStatus==="connected"?"Refresh model status":"Load model comparison"}</button><span role="status">{modelStatus==="connected"?"Read-only model benchmark loaded":modelStatus==="error"?"Model benchmark API unavailable":"No external model is run by this page"}</span></div>
+      {model&&<div className="demo-feedback"><h3>Side-by-side evaluator comparison</h3><p>Author labels, deterministic lexical screening and optional model verdicts. The read-only endpoint does not run an LLM; missing verdicts are shown as unavailable, not inferred.</p><p>Model verdicts returned: {model.model_returned} / {model.total} · Abstentions: {model.model_abstained}</p><div className="demo-table-wrap"><table className="demo-table"><thead><tr><th>Fixture</th><th>Author label</th><th>Lexical screen</th><th>Model verdict</th><th>Disposition</th></tr></thead><tbody>{model.rows.map(row=><tr key={row.example_id}><td>{title(row.example_id)}</td><td>{title(row.expected)}</td><td>{title(row.lexical_status)}</td><td>{row.model_verdict?title(row.model_verdict):"Not run"}</td><td>{title(row.disposition)}</td></tr>)}</tbody></table></div><p className="demo-muted">{model.disclaimer} Lexical review-required is not semantic support. No clinician labels are claimed.</p></div>}
       <div className="demo-metrics"><div><strong>{fixtures.length}</strong><span>Illustrative fixtures</span></div><div><strong>{mismatches.length}</strong><span>Illustrative mismatches</span></div><div><strong>{answered}</strong><span>Your answers</span></div><div><strong>{correct}</strong><span>Matching author labels</span></div></div>
       <div className="demo-table-wrap"><table className="demo-table"><thead><tr><th>Fixture</th><th>Author label</th><th>Illustrative lexical result</th><th>Comparison</th></tr></thead><tbody>{baseline.map(r=><tr key={r.id}><td>{title(r.id)}</td><td>{title(r.expected)}</td><td>{title(r.simulated)}</td><td>{r.expected===r.simulated?"Match":"Mismatch"}</td></tr>)}</tbody></table></div>
       <div className="demo-export"><div><h3>Your demo results</h3><p>{answered} of {fixtures.length} cases answered, {correct} matching fictional author labels. Export a local JSON report with your answers and the stated limitations.</p></div><button onClick={exportResults} disabled={answered===0}>Download results (.json)</button></div>
