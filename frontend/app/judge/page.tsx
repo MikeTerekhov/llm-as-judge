@@ -19,7 +19,7 @@ export default function JudgePage(){
   },[]);
   return <main>
     <p className="muted">AI REGIMEN / RESEARCH WORKSPACE</p>
-    <h1>Judge evaluation</h1><p><a href="/judge/overview">Research evaluation overview →</a></p><p><a href="/judge/model-comparison">Compare saved model runs →</a></p><p><a href="/judge/adversarial">View adversarial stress tests →</a></p><p><a href="/judge/history">View experiment history →</a></p><p><a href="/judge/evaluation-history">View evaluation history →</a></p><p><a href="/judge/releases">View research release registry →</a></p>
+    <h1>Judge evaluation</h1><p><a href="/judge/overview">Research evaluation overview →</a></p><p><a href="/judge/model-comparison">Compare saved model runs →</a></p><p><a href="/judge/experiment-history">Explore saved experiment history →</a></p><p><a href="/judge/adversarial">View adversarial stress tests →</a></p><p><a href="/judge/history">View experiment history →</a></p><p><a href="/judge/evaluation-history">View evaluation history →</a></p><p><a href="/judge/releases">View research release registry →</a></p>
     <p className="muted">Read-only synthetic benchmark. No external LLM calls or clinical validation.</p>
     <p><a href="/">Back to case review</a></p>
     {error&&<div className="notice" role="alert">{error}</div>}
