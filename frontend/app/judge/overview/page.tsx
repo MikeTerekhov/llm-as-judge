@@ -42,7 +42,7 @@ export default function ResearchDashboard(){
     <p className="muted">AI REGIMEN / SYNTHETIC RESEARCH</p>
     <h1>Research evaluation overview</h1>
     <p>One read-only view of deterministic screening, model availability, human annotation and process quality gates. All cases are fictional. Nothing here establishes clinical correctness.</p>
-    <div className="research-actions"><button onClick={()=>{setLexical(empty());setModel(empty());setHuman(empty());setGates(empty());setRefresh(v=>v+1);}}>Refresh research status</button><Link href="/demo">Guided demo</Link><Link href="/judge">Detailed evaluations</Link></div>
+    <div className="research-actions"><button onClick={()=>{setLexical(empty());setModel(empty());setHuman(empty());setGates(empty());setRefresh(v=>v+1);}}>Refresh research status</button><Link href="/demo">Guided demo</Link><Link href="/judge">Detailed evaluations</Link><Link href="/judge/model-comparison">Compare model runs</Link></div>
     <div className="research-metrics">
       <Metric label="Fictional stress tests" value={lexical.data?String(lexical.data.total):"—"} detail={state(lexical)}/>
       <Metric label="Lexical false-assurance risks" value={lexical.data?String(lexical.data.potential_false_assurance_count):"—"} detail="Flagged for human attention, not validated errors"/>
