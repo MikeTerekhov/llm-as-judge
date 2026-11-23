@@ -14,6 +14,7 @@ AI Regimen is a research-only application for exploring evidence grounding, lexi
 | Synthetic case review | Validated fictional HIV case inputs, completeness review and evidence-dependent assessment with conservative abstention |
 | Evidence management | Operator-reviewed source snapshots, structured guideline parsing, provenance metadata and local evidence search |
 | Claim evaluation | Deterministic lexical grounding, synthetic benchmark, optional model-judge adapter and lexical/model comparison |
+| Semantic screening | Optional local sentence-level NLI check for entailment and contradiction, with an adversarial benchmark (`docs/AR-038.md`) |
 | Adversarial benchmark | Twelve fictional claim/evidence pairs testing negation, quantity, uncertainty, scope, time, entity and causality |
 | Research annotation | Local synthetic reviewer labels, disagreement analysis, inter-rater reliability and conservative quality gates |
 | Reproducibility | Experiment history, evaluation reports, regression comparisons, CI-generated synthetic artifacts and history dashboards |

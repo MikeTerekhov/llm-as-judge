@@ -1,0 +1,5 @@
+# Optional: local NLI semantic screening (clinical/nli_backends.py).
+# Not needed for the API, dashboards or tests.
+torch>=2.2,<3
+transformers>=4.40,<5
+sentencepiece>=0.2,<1
