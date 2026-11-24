@@ -20,6 +20,8 @@ class AdversarialExample:
     evidence: tuple[EvidenceHit, ...]
     expected: SemanticLabel
     explanation: str
+    template: str = ""
+    split: str = "core"
 
 def _hit(identifier: str, excerpt: str) -> EvidenceHit:
     return EvidenceHit(identifier, "Fictional evidence", "https://example.org/synthetic",
