@@ -15,7 +15,7 @@ AI Regimen is a research-only application for exploring evidence grounding, lexi
 | Evidence management | Operator-reviewed source snapshots, structured guideline parsing, provenance metadata and local evidence search |
 | Claim evaluation | Deterministic lexical grounding, synthetic benchmark, optional model-judge adapter and lexical/model comparison |
 | Semantic screening | Optional local sentence-level NLI check for entailment and contradiction, with an adversarial benchmark (`docs/AR-038.md`) |
-| Adversarial benchmark | Twelve fictional claim/evidence pairs testing negation, quantity, uncertainty, scope, time, entity and causality |
+| Adversarial benchmark | Twelve hand-written fictional claim/evidence pairs testing negation, quantity, uncertainty, scope, time, entity and causality, plus 360 rule-generated examples with a held-out test split (`docs/AR-039.md`) |
 | Research annotation | Local synthetic reviewer labels, disagreement analysis, inter-rater reliability and conservative quality gates |
 | Reproducibility | Experiment history, evaluation reports, regression comparisons, CI-generated synthetic artifacts and history dashboards |
 | Release governance | Release-readiness checks, manifests, local release registry, research audit trail and audit integrity checks |
